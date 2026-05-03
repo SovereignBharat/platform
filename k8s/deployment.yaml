@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openstack-api
+  labels:
+    app: openstack-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: openstack-api
+  template:
+    metadata:
+      labels:
+        app: openstack-api
+    spec:
+      containers:
+      - name: api
+        image: openstack-platform:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MOCK_MODE
+          value: "true"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        livenessProbe:
+          exec:
+            command: ["python3", "-c", "from openstack_sdk import OpenStackClient"]
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command: ["python3", "-c", "from openstack_sdk import OpenStackClient"]
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openstack-api
+spec:
+  selector:
+    app: openstack-api
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openstack-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openstack-dashboard
+  template:
+    metadata:
+      labels:
+        app: openstack-dashboard
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html
+        configMap:
+          name: openstack-html
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openstack-dashboard
+spec:
+  selector:
+    app: openstack-dashboard
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openstack-html
+data:
+  index.html: |
+    Cloud Platform Dashboard
+  home.html: |
+    Cloud Platform Landing

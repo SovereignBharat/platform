@@ -1,0 +1,10 @@
+# OpenStack Cloud Platform - Runtime Dependencies
+# Python 3.8+
+
+# No external dependencies required - uses stdlib only
+# Add your cloud provider SDK here for real OpenStack:
+# openstacksdk>=0.5.0
+# python-keystoneclient>=4.0.0
+# python-novaclient>=13.0.0
+# python-cinderclient>=7.0.0
+# python-neutronclient>=5.0.0

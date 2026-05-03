@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # OpenStack Cloud Platform API
+  api:
+    image: python:3.11-slim
+    container_name: openstack-api
+    ports:
+      - "5000:5000"
+    environment:
+      - MOCK_MODE=true
+      - LOG_LEVEL=INFO
+    working_dir: /workspace/project
+    volumes:
+      - .:/workspace/project
+    command: ["python3", "-c", "from openstack_sdk import OpenStackClient; print('OpenStack Cloud Platform ready!')]
+    restart: unless-stopped
+
+  # Web Dashboard (serve static files)
+  dashboard:
+    image: nginx:alpine
+    container_name: openstack-dashboard
+    ports:
+      - "8080:80"
+    volumes:
+      - ./cloud-platform.html:/usr/share/nginx/html/index.html:ro
+      - ./index.html:/usr/share/nginx/html/home.html:ro
+    restart: unless-stopped
+
+  # CLI (for batch jobs)
+  cli:
+    image: python:3.11-slim
+    container_name: openstack-cli
+    working_dir: /workspace/project
+    volumes:
+      - .:/workspace/project
+    command: ["python3", "cloud_cli.py", "flavors"]
+
+networks:
+  default:
+    name: openstack-network

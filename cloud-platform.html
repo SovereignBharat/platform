@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenStack Cloud Platform | Compute Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00D4AA;
+            --primary-dark: #00B894;
+            --secondary: #6C5CE7;
+            --bg-dark: #0D1117;
+            --bg-card: #161B22;
+            --bg-hover: #21262D;
+            --border: #30363D;
+            --text-primary: #F0F6FC;
+            --text-secondary: #8B949E;
+            --text-muted: #6E7681;
+            --success: #3FB950;
+            --warning: #D29922;
+            --error: #F85149;
+            --info: #58A6FF;
+            --gradient: linear-gradient(135deg, #00D4AA 0%, #6C5CE7 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background Pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 50px,
+                    rgba(255,255,255,0.01) 50px,
+                    rgba(255,255,255,0.01) 51px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 50px,
+                    rgba(255,255,255,0.01) 50px,
+                    rgba(255,255,255,0.01) 51px
+                );
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo-section {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        .nav-menu {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .nav-section {
+            padding: 8px 16px;
+            margin-bottom: 8px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 8px 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 0 2px 2px 0;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--secondary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .user-section {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .stat-icon.compute { background: rgba(0, 212, 170, 0.15); color: var(--primary); }
+        .stat-icon.storage { background: rgba(108, 92, 231, 0.15); color: var(--secondary); }
+        .stat-icon.network { background: rgba(88, 166, 255, 0.15); color: var(--info); }
+        .stat-icon.billing { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+
+        .stat-trend {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .stat-trend.up {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--success);
+        }
+
+        .stat-trend.down {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--error);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-action {
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .card-action:hover {
+            opacity: 0.8;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Instances Table */
+        .table {
+            width: 100%;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .table-row:hover {
+            background: var(--bg-hover);
+        }
+
+        .instance-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .instance-ip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.running {
+            background: rgba(63, 185, 80, 0.15);
+            color: var(--success);
+        }
+
+        .status-badge.stopped {
+            background: rgba(248, 81, 73, 0.15);
+            color: var(--error);
+        }
+
+        .status-badge.pending {
+            background: rgba(210, 153, 34, 0.15);
+            color: var(--warning);
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .flavor-badge {
+            background: var(--bg-hover);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            background: var(--bg-hover);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            color: var(--bg-dark);
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .activity-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .activity-icon.create { background: rgba(63, 185, 80, 0.15); color: var(--success); }
+        .activity-icon.delete { background: rgba(248, 81, 73, 0.15); color: var(--error); }
+        .activity-icon.start { background: rgba(0, 212, 170, 0.15); color: var(--primary); }
+        .activity-icon.stop { background: rgba(210, 153, 34, 0.15); color: var(--warning); }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .action-card {
+            background: var(--bg-hover);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .action-card-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .action-card-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Region Selector */
+        .region-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-hover);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .region-selector:hover {
+            background: var(--border);
+        }
+
+        .region-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .region-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 16px;
+            width: 320px;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--primary);
+        }
+
+        .search-bar input {
+            flex: 1;
+            background: none;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            color: var(--text-muted);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0, 212, 170, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--bg-hover);
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Resource Bars */
+        .resource-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-hover);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .resource-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .resource-fill.compute { background: var(--primary); }
+        .resource-fill.storage { background: var(--secondary); }
+        .resource-fill.network { background: var(--info); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .form-select {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Notifications */
+        .notifications {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1001;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .notification {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification.success { border-left: 3px solid var(--success); }
+        .notification.error { border-left: 3px solid var(--error); }
+        .notification.warning { border-left: 3px solid var(--warning); }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <div class="logo">
+                    <div class="logo-icon">OS</div>
+                    <div class="logo-text">Open<span>Stack</span></div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <div class="nav-section-title">Compute</div>
+                    <div class="nav-item active">
+                        <span class="nav-icon">⚡</span>
+                        Instances
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">🖥️</span>
+                        Images
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📦</span>
+                        Flavors
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">🔑</span>
+                        Key Pairs
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Storage</div>
+                    <div class="nav-item">
+                        <span class="nav-icon">💾</span>
+                        Volumes
+                        <span class="nav-badge">3</span>
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📁</span>
+                        Snapshots
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">☁️</span>
+                        Objects
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Network</div>
+                    <div class="nav-item">
+                        <span class="nav-icon">🌐</span>
+                        Networks
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">🛡️</span>
+                        Security Groups
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">🔗</span>
+                        Routers
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📡</span>
+                        Floating IPs
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <div class="nav-item">
+                        <span class="nav-icon">📊</span>
+                        Monitoring
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">💰</span>
+                        Billing
+                    </div>
+                    <div class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        Settings
+                    </div>
+                </div>
+            </nav>
+
+            <div class="user-section">
+                <div class="user-avatar">AD</div>
+                <div class="user-info">
+                    <div class="user-name">Admin</div>
+                    <div class="user-role">Administrator</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="toolbar">
+                    <div>
+                        <h1 class="page-title">Instances</h1>
+                        <p class="page-subtitle">Manage your virtual compute instances</p>
+                    </div>
+                    <div class="toolbar-left">
+                        <div class="region-selector">
+                            <span class="region-dot"></span>
+                            <span class="region-name">us-east-1</span>
+                        </div>
+                        <div class="search-bar">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" placeholder="Search instances...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon compute">⚡</div>
+                        <span class="stat-trend up">+12%</span>
+                    </div>
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Running Instances</div>
+                    <div class="resource-bar">
+                        <div class="resource-fill compute" style="width: 65%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon storage">💾</div>
+                        <span class="stat-trend up">+8%</span>
+                    </div>
+                    <div class="stat-value">512 GB</div>
+                    <div class="stat-label">Storage Used</div>
+                    <div class="resource-bar">
+                        <div class="resource-fill storage" style="width: 42%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon network">🌐</div>
+                        <span class="stat-trend up">+24%</span>
+                    </div>
+                    <div class="stat-value">1.2 TB</div>
+                    <div class="stat-label">Data Transfer</div>
+                    <div class="resource-bar">
+                        <div class="resource-fill network" style="width: 78%;"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon billing">💰</div>
+                        <span class="stat-trend down">-3%</span>
+                    </div>
+                    <div class="stat-value">$2,847</div>
+                    <div class="stat-label">This Month</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header">
+                    <h3 class="card-title">Quick Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="quick-actions">
+                        <div class="action-card" onclick="openModal('launch-modal')">
+                            <div class="action-card-icon">🚀</div>
+                            <div class="action-card-title">Launch Instance</div>
+                        </div>
+                        <div class="action-card" onclick="openModal('volume-modal')">
+                            <div class="action-card-icon">💾</div>
+                            <div class="action-card-title">Create Volume</div>
+                        </div>
+                        <div class="action-card" onclick="openModal('network-modal')">
+                            <div class="action-card-icon">🌐</div>
+                            <div class="action-card-title">Create Network</div>
+                        </div>
+                        <div class="action-card" onclick="openModal('keypair-modal')">
+                            <div class="action-card-icon">🔑</div>
+                            <div class="action-card-title">Generate Key Pair</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instances Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Your Instances</h3>
+                    <div class="tabs">
+                        <div class="tab active">All</div>
+                        <div class="tab">Running</div>
+                        <div class="tab">Stopped</div>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table">
+                        <div class="table-header">
+                            <div>Instance</div>
+                            <div>IP Address</div>
+                            <div>Status</div>
+                            <div>Flavor</div>
+                            <div>Actions</div>
+                        </div>
+                        <div class="table-row">
+                            <div>
+                                <div class="instance-name">web-server-01</div>
+                                <div class="instance-ip">10.0.1.15</div>
+                            </div>
+                            <div class="instance-ip">192.168.1.101</div>
+                            <div><span class="status-badge running">Running</span></div>
+                            <div><span class="flavor-badge">t1.small</span></div>
+                            <div>
+                                <button class="action-btn" onclick="stopInstance('web-server-01')">Stop</button>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div>
+                                <div class="instance-name">db-server-01</div>
+                                <div class="instance-ip">10.0.1.22</div>
+                            </div>
+                            <div class="instance-ip">192.168.1.102</div>
+                            <div><span class="status-badge running">Running</span></div>
+                            <div><span class="flavor-badge">t1.medium</span></div>
+                            <div>
+                                <button class="action-btn" onclick="stopInstance('db-server-01')">Stop</button>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div>
+                                <div class="instance-name">app-server-01</div>
+                                <div class="instance-ip">10.0.1.35</div>
+                            </div>
+                            <div class="instance-ip">192.168.1.103</div>
+                            <div><span class="status-badge stopped">Stopped</span></div>
+                            <div><span class="flavor-badge">t1.large</span></div>
+                            <div>
+                                <button class="action-btn" onclick="startInstance('app-server-01')">Start</button>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div>
+                                <div class="instance-name">worker-01</div>
+                                <div class="instance-ip">10.0.1.42</div>
+                            </div>
+                            <div class="instance-ip">192.168.1.104</div>
+                            <div><span class="status-badge pending">Pending</span></div>
+                            <div><span class="flavor-badge">t1.micro</span></div>
+                            <div>
+                                <button class="action-btn" onclick="stopInstance('worker-01')">Stop</button>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div>
+                                <div class="instance-name">test-env</div>
+                                <div class="instance-ip">10.0.1.50</div>
+                            </div>
+                            <div class="instance-ip">192.168.1.105</div>
+                            <div><span class="status-badge running">Running</span></div>
+                            <div><span class="flavor-badge">t1.nano</span></div>
+                            <div>
+                                <button class="action-btn" onclick="stopInstance('test-env')">Stop</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid" style="margin-top: 24px;">
+                <!-- Activity Feed -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Activity</h3>
+                        <span class="card-action">View All</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-feed">
+                            <div class="activity-item">
+                                <div class="activity-icon create">+</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Instance <strong>web-server-01</strong> created</div>
+                                    <div class="activity-time">2 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon start">▶</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Instance <strong>db-server-01</strong> started</div>
+                                    <div class="activity-time">15 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon stop">⏹</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Instance <strong>app-server-01</strong> stopped</div>
+                                    <div class="activity-time">1 hour ago</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon delete">×</div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Volume <strong>backup-vol-03</strong> deleted</div>
+                                    <div class="activity-time">3 hours ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resource Usage -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Resource Usage</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 13px; color: var(--text-secondary);">vCPUs</span>
+                                <span style="font-size: 13px; font-weight: 600;">48 / 64</span>
+                            </div>
+                            <div class="resource-bar" style="height: 8px;">
+                                <div class="resource-fill compute" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 13px; color: var(--text-secondary);">Memory</span>
+                                <span style="font-size: 13px; font-weight: 600;">96 GB / 128 GB</span>
+                            </div>
+                            <div class="resource-bar" style="height: 8px;">
+                                <div class="resource-fill compute" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 13px; color: var(--text-secondary);">SSD Storage</span>
+                                <span style="font-size: 13px; font-weight: 600;">512 GB / 1 TB</span>
+                            </div>
+                            <div class="resource-bar" style="height: 8px;">
+                                <div class="resource-fill storage" style="width: 51%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-size: 13px; color: var(--text-secondary);">Floating IPs</span>
+                                <span style="font-size: 13px; font-weight: 600;">8 / 20</span>
+                            </div>
+                            <div class="resource-bar" style="height: 8px;">
+                                <div class="resource-fill network" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Launch Instance Modal -->
+    <div class="modal-overlay" id="launch-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Launch Instance</h3>
+                <div class="modal-close" onclick="closeModal('launch-modal')">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Instance Name</label>
+                    <input type="text" class="form-input" placeholder="my-instance">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Image</label>
+                    <select class="form-select" id="image-select">
+                        <option>Ubuntu 24.04 LTS</option>
+                        <option>Ubuntu 22.04 LTS</option>
+                        <option>CentOS Stream 9</option>
+                        <option>Debian 12</option>
+                        <option>Fedora 40</option>
+                        <option>Rocky Linux 9</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Flavor</label>
+                    <select class="form-select" id="flavor-select">
+                        <option>t1.nano - 1 vCPU, 512MB RAM</option>
+                        <option>t1.micro - 1 vCPU, 1GB RAM</option>
+                        <option selected>t1.small - 2 vCPU, 2GB RAM</option>
+                        <option>t1.medium - 4 vCPU, 4GB RAM</option>
+                        <option>t1.large - 8 vCPU, 8GB RAM</option>
+                        <option>t1.xlarge - 16 vCPU, 16GB RAM</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Network</label>
+                    <select class="form-select" id="network-select">
+                        <option>provider (192.168.1.0/24)</option>
+                        <option>internal (10.0.1.0/24)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Security Group</label>
+                    <select class="form-select" id="security-group">
+                        <option>default</option>
+                        <option>web-server</option>
+                        <option>db-server</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Pair</label>
+                    <select class="form-select" id="keypair-select">
+                        <option>my-keypair</option>
+                        <option>Generate new key pair...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('launch-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="launchInstance()">🚀 Launch Instance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Volume Modal -->
+    <div class="modal-overlay" id="volume-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Volume</h3>
+                <div class="modal-close" onclick="closeModal('volume-modal')">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Volume Name</label>
+                    <input type="text" class="form-input" placeholder="my-volume">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Size (GB)</label>
+                    <input type="number" class="form-input" value="50" min="10" max="1000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Volume Type</label>
+                    <select class="form-select">
+                        <option>SSD (Default)</option>
+                        <option>HDD</option>
+                        <option>Encrypted</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('volume-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createVolume()">💾 Create Volume</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Network Modal -->
+    <div class="modal-overlay" id="network-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create Network</h3>
+                <div class="modal-close" onclick="closeModal('network-modal')">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Network Name</label>
+                    <input type="text" class="form-input" placeholder="my-network">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">CIDR</label>
+                        <input type="text" class="form-input" value="10.0.2.0/24">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DHCP Range</label>
+                        <input type="text" class="form-input" value="10.0.2.100,10.0.2.200">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">DNS Nameservers</label>
+                    <input type="text" class="form-input" value="8.8.8.8,8.8.4.4" placeholder="DNS servers">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('network-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createNetwork()">🌐 Create Network</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generate Key Pair Modal -->
+    <div class="modal-overlay" id="keypair-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Generate Key Pair</h3>
+                <div class="modal-close" onclick="closeModal('keypair-modal')">✕</div>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Key Pair Name</label>
+                    <input type="text" class="form-input" placeholder="my-keypair">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Type</label>
+                    <select class="form-select">
+                        <option>RSA 4096-bit (Recommended)</option>
+                        <option>ED25519</option>
+                        <option>RSA 2048-bit</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('keypair-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="generateKeyPair()">🔑 Generate Key Pair</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div class="notifications" id="notifications"></div>
+
+    <script>
+        // OpenStack Cloud Platform Dashboard JavaScript
+        // Simulates OpenStack API interactions
+
+        // Mock Data
+        const instances = [
+            { id: '1', name: 'web-server-01', ip: '10.0.1.15', floatingIp: '192.168.1.101', status: 'running', flavor: 't1.small', image: 'Ubuntu 22.04' },
+            { id: '2', name: 'db-server-01', ip: '10.0.1.22', floatingIp: '192.168.1.102', status: 'running', flavor: 't1.medium', image: 'Ubuntu 22.04' },
+            { id: '3', name: 'app-server-01', ip: '10.0.1.35', floatingIp: '192.168.1.103', status: 'stopped', flavor: 't1.large', image: 'Ubuntu 22.04' },
+            { id: '4', name: 'worker-01', ip: '10.0.1.42', floatingIp: '192.168.1.104', status: 'pending', flavor: 't1.micro', image: 'Ubuntu 22.04' },
+            { id: '5', name: 'test-env', ip: '10.0.1.50', floatingIp: '192.168.1.105', status: 'running', flavor: 't1.nano', image: 'Ubuntu 22.04' }
+        ];
+
+        const volumes = [
+            { id: '1', name: 'data-vol-01', size: 50, status: 'available', type: 'SSD' },
+            { id: '2', name: 'db-data-01', size: 100, status: 'in-use', type: 'SSD' },
+            { id: '3', name: 'backup-vol-01', size: 200, status: 'available', type: 'HDD' }
+        ];
+
+        const networks = [
+            { id: '1', name: 'provider', cidr: '192.168.1.0/24', status: 'active' },
+            { id: '2', name: 'internal', cidr: '10.0.1.0/24', status: 'active' }
+        ];
+
+        // Modal Functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close modal on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+
+        // Notification System
+        function showNotification(message, type = 'success') {
+            const notifications = document.getElementById('notifications');
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✕' : '!'}</span>
+                <span>${message}</span>
+            `;
+            notifications.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Instance Actions
+        function launchInstance() {
+            const name = document.querySelector('#launch-modal .form-input').value || 'new-instance';
+            const image = document.getElementById('image-select').value;
+            const flavor = document.getElementById('flavor-select').value;
+
+            showNotification(`🚀 Launching instance "${name}" with ${image} (${flavor})...`, 'success');
+
+            setTimeout(() => {
+                instances.push({
+                    id: String(instances.length + 1),
+                    name: name,
+                    ip: `10.0.1.${50 + instances.length}`,
+                    floatingIp: `192.168.1.${100 + instances.length}`,
+                    status: 'pending',
+                    flavor: flavor.split(' ')[0],
+                    image: image
+                });
+                updateInstanceTable();
+                showNotification(`✅ Instance "${name}" launched successfully!`, 'success');
+            }, 1500);
+
+            closeModal('launch-modal');
+        }
+
+        function startInstance(name) {
+            const instance = instances.find(i => i.name === name);
+            if (instance) {
+                instance.status = 'pending';
+                updateInstanceTable();
+                showNotification(`▶ Starting instance "${name}"...`, 'success');
+
+                setTimeout(() => {
+                    instance.status = 'running';
+                    updateInstanceTable();
+                    showNotification(`✅ Instance "${name}" is now running`, 'success');
+                }, 1000);
+            }
+        }
+
+        function stopInstance(name) {
+            const instance = instances.find(i => i.name === name);
+            if (instance) {
+                instance.status = 'stopped';
+                updateInstanceTable();
+                showNotification(`⏹ Stopping instance "${name}"...`, 'success');
+
+                setTimeout(() => {
+                    updateInstanceTable();
+                    showNotification(`✅ Instance "${name}" stopped`, 'success');
+                }, 500);
+            }
+        }
+
+        function terminateInstance(name) {
+            const index = instances.findIndex(i => i.name === name);
+            if (index > -1) {
+                instances.splice(index, 1);
+                updateInstanceTable();
+                showNotification(`🗑 Instance "${name}" terminated`, 'success');
+            }
+        }
+
+        function updateInstanceTable() {
+            // In a real implementation, this would rebuild the table
+            console.log('Instances:', instances);
+        }
+
+        // Volume Actions
+        function createVolume() {
+            const name = document.querySelector('#volume-modal .form-input').value || 'new-volume';
+            const size = document.querySelector('#volume-modal input[type="number"]').value;
+
+            showNotification(`💾 Creating volume "${name}" (${size}GB)...`, 'success');
+
+            setTimeout(() => {
+                volumes.push({
+                    id: String(volumes.length + 1),
+                    name: name,
+                    size: parseInt(size),
+                    status: 'available',
+                    type: 'SSD'
+                });
+                showNotification(`✅ Volume "${name}" created successfully!`, 'success');
+            }, 1000);
+
+            closeModal('volume-modal');
+        }
+
+        // Network Actions
+        function createNetwork() {
+            const name = document.querySelector('#network-modal .form-input').value || 'new-network';
+            const cidr = document.querySelector('#network-modal .form-input').value;
+
+            showNotification(`🌐 Creating network "${name}" (${cidr})...`, 'success');
+
+            setTimeout(() => {
+                networks.push({
+                    id: String(networks.length + 1),
+                    name: name,
+                    cidr: cidr,
+                    status: 'active'
+                });
+                showNotification(`✅ Network "${name}" created successfully!`, 'success');
+            }, 1000);
+
+            closeModal('network-modal');
+        }
+
+        // Key Pair Actions
+        function generateKeyPair() {
+            const name = document.querySelector('#keypair-modal .form-input').value || 'new-keypair';
+
+            showNotification(`🔑 Generating key pair "${name}"...`, 'success');
+
+            setTimeout(() => {
+                showNotification(`✅ Key pair "${name}" generated and downloaded!`, 'success');
+            }, 1000);
+
+            closeModal('keypair-modal');
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Filter Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+
+                const filter = this.textContent;
+                // In a real implementation, this would filter the instances
+                console.log('Filter:', filter);
+            });
+        });
+
+        // Search
+        document.querySelector('.search-bar input').addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            const filtered = instances.filter(i => 
+                i.name.toLowerCase().includes(query) ||
+                i.ip.includes(query)
+            );
+            console.log('Search results:', filtered);
+        });
+
+        // Initialize
+        console.log('OpenStack Cloud Platform Dashboard Initialized');
+        console.log('Available instances:', instances.length);
+        console.log('Available volumes:', volumes.length);
+        console.log('Available networks:', networks.length);
+    </script>
+</body>
+</html>

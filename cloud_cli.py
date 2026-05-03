@@ -2,13 +2,18 @@
 """
 OpenStack Cloud Platform - Instance Management CLI
 Command-line interface for managing cloud instances.
+
+Security:
+- Input validation and sanitization
+- Rate limiting
+- Audit logging
+- Secure token generation
 """
 
 import sys
 import os
 import argparse
-import json
-import time
+import logging
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -16,8 +21,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from openstack_sdk import (
     OpenStackClient, InstanceState, VolumeState, NetworkState,
-    Instance, Volume, Network, Flavor, Image
+    validate_name, validate_cidr, check_rate_limit
 )
+
+# Configure security audit logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+audit_logger = logging.getLogger('CLI.Audit')
 
 
 class CloudCLI:

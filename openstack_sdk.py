@@ -11,25 +11,189 @@ Supported Services:
 - Network (Neutron) - Networking
 - Identity (Keystone) - Authentication
 - Orchestration (Heat) - Infrastructure as Code
+
+Security Features:
+- Input validation and sanitization
+- Rate limiting support
+- Request signing
+- SSL/TLS verification
+- Audit logging
 """
 
 import os
+import re
 import json
 import time
+import hmac
 import hashlib
 import uuid
+import secrets
 import logging
-from datetime import datetime
-from typing import Optional, List, Dict, Any
+import ipaddress
+from datetime import datetime, timedelta
+from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import wraps
+from contextlib import contextmanager
 
-# Configure logging
+# Security: Configure logging with audit trail
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('OpenStackSDK')
+audit_logger = logging.getLogger('OpenStackSDK.Audit')
+
+# Security: Define allowed patterns for validation
+SANITIZE_PATTERN = re.compile(r'[^\w\-_.]')
+VALID_NAME_PATTERN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9\-_]*$')
+VALID_IP_PATTERN = re.compile(r'^(\d{1,3}\.){3}\d{1,3}$')
+VALID_CIDR_PATTERN = re.compile(r'^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$')
+
+# Security: Rate limiting storage
+_rate_limit_store: Dict[str, List[datetime]] = {}
+
+# Security: Maximum resource limits
+MAX_RESOURCE_LIMITS = {
+    'instances': 100,
+    'volumes': 50,
+    'networks': 20,
+    'vcpus': 64,
+    'ram_mb': 131072,
+    'disk_gb': 1000,
+}
+
+
+# =============================================================================
+# Security Utilities
+# =============================================================================
+
+def sanitize_input(value: str, max_length: int = 255) -> str:
+    """Sanitize user input to prevent injection attacks."""
+    if not isinstance(value, str):
+        value = str(value)
+    # Remove potentially dangerous characters
+    sanitized = SANITIZE_PATTERN.sub('', value)
+    # Trim to max length
+    return sanitized[:max_length]
+
+
+def validate_name(name: str) -> bool:
+    """Validate resource name format."""
+    if not name or len(name) < 2 or len(name) > 64:
+        return False
+    return bool(VALID_NAME_PATTERN.match(name))
+
+
+def validate_ip(ip: str) -> bool:
+    """Validate IPv4 address format."""
+    try:
+        ipaddress.IPv4Address(ip)
+        return True
+    except ValueError:
+        return False
+
+
+def validate_cidr(cidr: str) -> bool:
+    """Validate CIDR notation."""
+    try:
+        ipaddress.IPv4Network(cidr, strict=False)
+        return True
+    except ValueError:
+        return False
+
+
+def check_rate_limit(identifier: str, max_requests: int = 100, 
+                   window_seconds: int = 60) -> bool:
+    """Check if requester has exceeded rate limit."""
+    now = datetime.now()
+    window = timedelta(seconds=window_seconds)
+    
+    # Clean old entries
+    if identifier not in _rate_limit_store:
+        _rate_limit_store[identifier] = []
+    _rate_limit_store[identifier] = [
+        ts for ts in _rate_limit_store[identifier]
+        if now - ts < window
+    ]
+    
+    # Check limit
+    if len(_rate_limit_store[identifier]) >= max_requests:
+        logger.warning(f"Rate limit exceeded for: {identifier}")
+        audit_logger.warning(f"RATE_LIMIT_EXCEEDED: {identifier}")
+        return False
+    
+    # Record this request
+    _rate_limit_store[identifier].append(now)
+    return True
+
+
+def check_resource_limit(resource_type: str, count: int) -> bool:
+    """Check if resource quota would be exceeded."""
+    limit = MAX_RESOURCE_LIMITS.get(resource_type, float('inf'))
+    return count < limit
+
+
+def generate_secure_token(length: int = 32) -> str:
+    """Generate cryptographically secure token."""
+    return secrets.token_urlsafe(length)
+
+
+def hash_password(password: str, salt: Optional[str] = None) -> tuple:
+    """Hash password with salt using secure algorithm."""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    hashed = hashlib.pbkdf2_hmac(
+        'sha256', 
+        password.encode(), 
+        salt.encode(), 
+        100000
+    )
+    return hashed.hex(), salt
+
+
+def verify_password(password: str, hashed: str, salt: str) -> bool:
+    """Verify password against hash."""
+    new_hash, _ = hash_password(password, salt)
+    return hmac.compare_digest(new_hash, hashed)
+
+
+def sign_request(data: Dict[str, Any], secret_key: str) -> str:
+    """Sign API request for authenticity."""
+    # Create canonical string
+    canonical = '&'.join(f"{k}={v}" for k, v in sorted(data.items()))
+    signature = hmac.new(
+        secret_key.encode(),
+        canonical.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return signature
+
+
+@contextmanager
+def audit_log(operation: str):
+    """Context manager for audit logging."""
+    start_time = datetime.now()
+    try:
+        yield
+        audit_logger.info(f"SUCCESS: {operation} completed")
+    except Exception as e:
+        audit_logger.error(f"FAILED: {operation} - {str(e)}")
+        raise
+    finally:
+        duration = (datetime.now() - start_time).total_seconds()
+        audit_logger.info(f"AUDIT: {operation} took {duration:.3f}s")
+
+
+def require_auth(func: Callable) -> Callable:
+    """Decorator to require authentication."""
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if not self.token:
+            raise PermissionError("Authentication required")
+        return func(self, *args, **kwargs)
+    return wrapper
 
 
 class InstanceState(Enum):
@@ -424,7 +588,34 @@ class OpenStackClient:
             
         Returns:
             Created Instance object
+            
+        Raises:
+            ValueError: If validation fails
+            PermissionError: If rate limit exceeded
         """
+        # Security: Validate name
+        if not validate_name(name):
+            raise ValueError(f"Invalid name format: {name}")
+        
+        # Security: Sanitize name
+        name = sanitize_input(name)
+        
+        # Security: Check rate limit
+        if not check_rate_limit(f"create_instance:{self.username or 'anonymous'}"):
+            raise PermissionError("Rate limit exceeded")
+        
+        # Security: Check resource quota
+        if not check_resource_limit('instances', len(self._instances)):
+            raise PermissionError("Instance quota exceeded")
+        
+        # Security: Validate user_data length (prevent DoS)
+        if user_data and len(user_data) > 65536:
+            raise ValueError("user_data exceeds maximum size")
+        
+        # Security: Sanitize metadata values
+        if metadata:
+            metadata = {k: sanitize_input(v, 255) for k, v in metadata.items()}
+        
         if self.mock_mode:
             instance = Instance(
                 id=f"inst-{uuid.uuid4().hex[:8]}",
@@ -650,7 +841,31 @@ class OpenStackClient:
             
         Returns:
             Created Network object
+            
+        Raises:
+            ValueError: If validation fails
         """
+        # Security: Validate name
+        if not validate_name(name):
+            raise ValueError(f"Invalid name format: {name}")
+        
+        # Security: Validate CIDR
+        if not validate_cidr(cidr):
+            raise ValueError(f"Invalid CIDR format: {cidr}")
+        
+        # Security: Sanitize inputs
+        name = sanitize_input(name)
+        cidr = sanitize_input(cidr)
+        
+        # Security: Validate network_type
+        allowed_types = ['flat', 'vlan', 'vxlan', 'gre']
+        if network_type not in allowed_types:
+            raise ValueError(f"Invalid network_type. Must be one of: {allowed_types}")
+        
+        # Security: Check resource quota
+        if not check_resource_limit('networks', len(self._networks)):
+            raise PermissionError("Network quota exceeded")
+        
         if self.mock_mode:
             network = Network(
                 id=f"net-{uuid.uuid4().hex[:8]}",

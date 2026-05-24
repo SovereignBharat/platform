@@ -1,0 +1,14 @@
+global:
+  namespace: sovereignbharat
+
+controlPlane:
+  image: sovereignbharat/control-plane:latest
+
+gateway:
+  image: sovereignbharat/gateway:latest
+
+iam:
+  image: sovereignbharat/iam:latest
+
+inference:
+  image: sovereignbharat/inference-engine:latest

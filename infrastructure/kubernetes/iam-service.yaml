@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: iam
+  namespace: sovereignbharat
+spec:
+  selector:
+    app: iam
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8082

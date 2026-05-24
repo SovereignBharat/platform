@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: inference-engine
+  namespace: sovereignbharat
+spec:
+  selector:
+    app: inference-engine
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083

@@ -1,0 +1,32 @@
+openapi: 3.1.0
+info:
+  title: SovereignBharat Control Plane API
+  version: 0.1.0
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+
+  /v1/clusters:
+    get:
+      summary: List clusters
+      responses:
+        '200':
+          description: Cluster list
+
+    post:
+      summary: Create cluster
+      responses:
+        '201':
+          description: Cluster created
+
+  /v1/deployments:
+    get:
+      summary: List deployments
+      responses:
+        '200':
+          description: Deployment list

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inference-engine
+  namespace: sovereignbharat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inference-engine
+  template:
+    metadata:
+      labels:
+        app: inference-engine
+    spec:
+      containers:
+        - name: inference-engine
+          image: sovereignbharat/inference-engine:latest
+          ports:
+            - containerPort: 8083
